@@ -1,122 +1,126 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from 'react';
+import type { GameMode, GameResult, GameScreen } from './types/game';
+import { LandingPage } from './components/LandingPage';
+import { LobbyScreen } from './components/LobbyScreen';
+import { GameScreen } from './components/GameScreen';
+import { ResultsScreen } from './components/ResultsScreen';
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+interface AppState {
+  screen: GameScreen;
+  playerName: string;
+  gameMode: GameMode;
+  lobbyPlayers: Array<{ id: string; name: string; isAI?: boolean }>;
+  lastResult: GameResult | null;
+  gameKey: number; // force remount on new game
 }
 
-export default App
+export default function App() {
+  const [app, setApp] = useState<AppState>({
+    screen: 'landing',
+    playerName: '',
+    gameMode: 'ai',
+    lobbyPlayers: [],
+    lastResult: null,
+    gameKey: 0,
+  });
+
+  // ── Landing → next screen ─────────────────────────────────────────────────
+
+  function handleLandingStart(name: string, mode: GameMode) {
+    if (mode === 'ai') {
+      setApp(prev => ({
+        ...prev,
+        playerName: name,
+        gameMode: mode,
+        screen: 'game',
+        lobbyPlayers: [],
+        lastResult: null,
+        gameKey: prev.gameKey + 1,
+      }));
+    } else {
+      setApp(prev => ({
+        ...prev,
+        playerName: name,
+        gameMode: mode,
+        screen: 'lobby',
+        lastResult: null,
+      }));
+    }
+  }
+
+  // ── Lobby → game ──────────────────────────────────────────────────────────
+
+  function handleLobbyStart(players: Array<{ id: string; name: string; isAI?: boolean }>) {
+    setApp(prev => ({
+      ...prev,
+      screen: 'game',
+      lobbyPlayers: players,
+      gameKey: prev.gameKey + 1,
+    }));
+  }
+
+  // ── Game over ─────────────────────────────────────────────────────────────
+
+  function handleGameOver(result: GameResult) {
+    // Small delay so the board shows result state briefly before transition
+    setTimeout(() => {
+      setApp(prev => ({ ...prev, screen: 'results', lastResult: result }));
+    }, 1200);
+  }
+
+  // ── Results → play again / home ───────────────────────────────────────────
+
+  function handlePlayAgain() {
+    if (app.gameMode === 'online') {
+      setApp(prev => ({ ...prev, screen: 'lobby', lastResult: null }));
+    } else {
+      setApp(prev => ({
+        ...prev,
+        screen: 'game',
+        lastResult: null,
+        gameKey: prev.gameKey + 1,
+      }));
+    }
+  }
+
+  function handleHome() {
+    setApp(prev => ({ ...prev, screen: 'landing', lastResult: null }));
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="min-h-screen" style={{ fontFamily: 'var(--font-display)' }}>
+      {app.screen === 'landing' && (
+        <LandingPage onStart={handleLandingStart} />
+      )}
+
+      {app.screen === 'lobby' && (
+        <LobbyScreen
+          playerName={app.playerName}
+          onStartGame={handleLobbyStart}
+          onBack={() => setApp(prev => ({ ...prev, screen: 'landing' }))}
+        />
+      )}
+
+      {app.screen === 'game' && (
+        <GameScreen
+          key={app.gameKey}
+          playerName={app.playerName}
+          gameMode={app.gameMode}
+          lobbyPlayers={app.gameMode === 'online' ? app.lobbyPlayers : undefined}
+          onGameOver={handleGameOver}
+        />
+      )}
+
+      {app.screen === 'results' && app.lastResult && (
+        <ResultsScreen
+          result={app.lastResult}
+          myId="local-player"
+          onPlayAgain={handlePlayAgain}
+          onHome={handleHome}
+        />
+      )}
+    </div>
+  );
+}
