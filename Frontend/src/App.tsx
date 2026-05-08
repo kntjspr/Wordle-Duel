@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import type { GameMode, GameResult, GameScreen } from './types/game';
+import type { GameMode, GameResult, GameScreen as GameScreenType } from './types/game';
 import { LandingPage } from './components/LandingPage';
 import { LobbyScreen } from './components/LobbyScreen';
 import { GameScreen } from './components/GameScreen';
 import { ResultsScreen } from './components/ResultsScreen';
 
 interface AppState {
-  screen: GameScreen;
+  screen: GameScreenType;
   playerName: string;
   gameMode: GameMode;
   lobbyPlayers: Array<{ id: string; name: string; isAI?: boolean }>;

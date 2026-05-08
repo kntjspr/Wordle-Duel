@@ -36,7 +36,7 @@ export function PlayerCard({ player, isMe }: Props) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <div
-            className="w-6 h-6 rounded-md flex-shrink-0 flex items-center justify-center text-xs font-black"
+            className="w-6 h-6 rounded-md shrink-0 flex items-center justify-center text-xs font-black"
             style={{
               background: isMe ? 'var(--color-primary)' : 'var(--color-secondary)',
               color: isMe ? 'var(--color-primary-foreground)' : 'var(--color-secondary-foreground)',
@@ -46,7 +46,7 @@ export function PlayerCard({ player, isMe }: Props) {
           </div>
           <span className="text-xs font-bold truncate">{player.name}{isMe ? ' (you)' : ''}</span>
         </div>
-        <div className="flex-shrink-0 text-right">
+        <div className="shrink-0 text-right">
           <div className="text-xs font-black" style={{ color: 'var(--color-primary)' }}>
             {score} pts
           </div>

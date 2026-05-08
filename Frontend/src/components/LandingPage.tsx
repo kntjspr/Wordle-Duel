@@ -41,7 +41,7 @@ export function LandingPage({ onStart }: Props) {
           ))}
         </div>
         <div className="flex items-center justify-center gap-2">
-          {['W','A','R','S'].map((l, i) => (
+          {['D','U','E','L'].map((l, i) => (
             <div
               key={i}
               className={`tile w-11 h-11 text-lg font-black ${
@@ -181,7 +181,7 @@ export function LandingPage({ onStart }: Props) {
 function GuideRow({ letter, state, text }: { letter: string; state: string; text: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className={`tile ${state} w-8 h-8 text-sm font-black rounded-md border-2 flex-shrink-0`}>{letter}</div>
+      <div className={`tile ${state} w-8 h-8 text-sm font-black rounded-md border-2 shrink-0`}>{letter}</div>
       <span className="text-xs">{text}</span>
     </div>
   );
