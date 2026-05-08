@@ -1,2 +1,2 @@
-# Messaging-Project
-Messaging App/System Project for PDC
+# Wordle Duel
+Game Project for PDC
