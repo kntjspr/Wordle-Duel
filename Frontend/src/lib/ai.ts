@@ -1,4 +1,4 @@
-import type { TileState, GuessRow } from '../types/game';
+import type { GuessRow } from '../types/game';
 
 // ─── AI Opening Words ────────────────────────────────────────────────────────
 

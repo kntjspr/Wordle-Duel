@@ -23,7 +23,6 @@ export function GameBoard({ state }: Props) {
           tiles={submitted.tiles}
           rowScore={submitted.score}
           isRevealing={isRevealing}
-          rowIdx={rowIdx}
         />
       );
     }
@@ -51,12 +50,11 @@ export function GameBoard({ state }: Props) {
 // ─── Submitted row ────────────────────────────────────────────────────────────
 
 function SubmittedRow({
-  tiles, rowScore, isRevealing, rowIdx,
+  tiles, rowScore, isRevealing,
 }: {
   tiles: GuessTile[];
   rowScore: number;
   isRevealing: boolean;
-  rowIdx: number;
 }) {
   return (
     <div className="relative flex gap-1.5 items-center">

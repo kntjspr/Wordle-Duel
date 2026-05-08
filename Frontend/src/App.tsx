@@ -9,9 +9,10 @@ interface AppState {
   screen: GameScreenType;
   playerName: string;
   gameMode: GameMode;
+  myPlayerId: string;                                      // real ID assigned by backend
   lobbyPlayers: Array<{ id: string; name: string; isAI?: boolean }>;
   lastResult: GameResult | null;
-  gameKey: number; // force remount on new game
+  gameKey: number;
 }
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
     screen: 'landing',
     playerName: '',
     gameMode: 'ai',
+    myPlayerId: 'local-player',                           // overwritten in online mode
     lobbyPlayers: [],
     lastResult: null,
     gameKey: 0,
@@ -33,6 +35,7 @@ export default function App() {
         playerName: name,
         gameMode: mode,
         screen: 'game',
+        myPlayerId: 'local-player',
         lobbyPlayers: [],
         lastResult: null,
         gameKey: prev.gameKey + 1,
@@ -48,13 +51,17 @@ export default function App() {
     }
   }
 
-  // ── Lobby → game ──────────────────────────────────────────────────────────
+  // ── Lobby → game (called by LobbyScreen when game_begin arrives) ──────────
 
-  function handleLobbyStart(players: Array<{ id: string; name: string; isAI?: boolean }>) {
+  function handleLobbyStart(
+    players: Array<{ id: string; name: string; isAI?: boolean }>,
+    myPlayerId: string,
+  ) {
     setApp(prev => ({
       ...prev,
       screen: 'game',
       lobbyPlayers: players,
+      myPlayerId,
       gameKey: prev.gameKey + 1,
     }));
   }
@@ -62,7 +69,6 @@ export default function App() {
   // ── Game over ─────────────────────────────────────────────────────────────
 
   function handleGameOver(result: GameResult) {
-    // Small delay so the board shows result state briefly before transition
     setTimeout(() => {
       setApp(prev => ({ ...prev, screen: 'results', lastResult: result }));
     }, 1200);
@@ -108,6 +114,7 @@ export default function App() {
           key={app.gameKey}
           playerName={app.playerName}
           gameMode={app.gameMode}
+          myPlayerId={app.myPlayerId}
           lobbyPlayers={app.gameMode === 'online' ? app.lobbyPlayers : undefined}
           onGameOver={handleGameOver}
         />
@@ -116,7 +123,7 @@ export default function App() {
       {app.screen === 'results' && app.lastResult && (
         <ResultsScreen
           result={app.lastResult}
-          myId="local-player"
+          myId={app.myPlayerId}
           onPlayAgain={handlePlayAgain}
           onHome={handleHome}
         />
