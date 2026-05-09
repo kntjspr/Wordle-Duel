@@ -43,6 +43,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 )
@@ -69,6 +70,7 @@ func main() {
 	mux.HandleFunc("GET /api/words/list", corsMiddleware(handleWordList(words)))
 	mux.HandleFunc("POST /api/words/validate", corsMiddleware(handleValidateWord(words)))
 	mux.HandleFunc("GET /health", handleHealth)
+	mux.HandleFunc("GET /metrics", handleMetrics)
 
 	// WebSocket endpoint
 	mux.HandleFunc("GET /ws", func(w http.ResponseWriter, r *http.Request) {
@@ -159,6 +161,19 @@ func handleValidateWord(words *WordService) http.HandlerFunc {
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "service": "wordlewars"})
+}
+
+func handleMetrics(w http.ResponseWriter, r *http.Request) {
+	var ms runtime.MemStats
+	runtime.ReadMemStats(&ms)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	writeJSON(w, http.StatusOK, map[string]any{
+		"goroutines":       runtime.NumGoroutine(),
+		"heap_alloc_mb":    float64(ms.HeapAlloc) / 1024 / 1024,
+		"heap_sys_mb":      float64(ms.HeapSys) / 1024 / 1024,
+		"sys_mb":           float64(ms.Sys) / 1024 / 1024,
+		"gc_cycles":        ms.NumGC,
+	})
 }
 
 // ─── Middleware ───────────────────────────────────────────────────────────────

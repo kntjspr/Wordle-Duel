@@ -87,9 +87,17 @@ export function useOnlineGame({
   const stateRef = useRef<GameState | null>(null);
 
   const [state, setState] = useState<GameState>(() => {
-    const players: Player[] = lobbyPlayers.length > 0
+    // Build player list from lobby. Always ensure our own player is present
+    // so typeLetter / submitGuess can find `me` via myPlayerId.
+    let players: Player[] = lobbyPlayers.length > 0
       ? lobbyPlayers.map(p => makePlayer(p.id, p.name))
-      : [makePlayer(myPlayerId, playerName)];
+      : [];
+
+    // Safety-net: if our ID isn't in the list (stale lobby ref edge-case), inject it
+    const selfInList = players.some(p => p.id === myPlayerId);
+    if (!selfInList) {
+      players = [makePlayer(myPlayerId, playerName), ...players];
+    }
 
     return {
       word: '?????',       // hidden — server never reveals it until game_over
@@ -275,11 +283,15 @@ export function useOnlineGame({
   // Guard: online game always has a word placeholder so loading screen doesn't flicker
   const isReady = state.players.length > 0;
 
+  // True when we are the only player (game started solo — shouldn't happen but guard it)
+  const waitingForOpponent = state.players.length < 2;
+
   return {
     state: { ...state, myId: myPlayerId },
     me: effectiveMe,
     keyStates,
     isReady,
+    waitingForOpponent,
     typeLetter,
     deleteLetter,
     submitGuess,

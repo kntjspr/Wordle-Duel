@@ -62,7 +62,8 @@ export function useOnline(
   playerName: string,
   { onGameBegin }: UseOnlineOptions = {}
 ) {
-  const myPlayerId = useRef<string>('');
+  const myPlayerIdRef = useRef<string>('');   // always-current ref for WS closures
+  const [myPlayerIdState, setMyPlayerIdState] = useState<string>(''); // reactive for consumers
   const currentLobbyRef = useRef<LobbyInfo | null>(null); // always-current ref for closures
   const [view, setView] = useState<LobbyView>('choose');
   const [lobbies, setLobbies] = useState<LobbyInfo[]>([]);
@@ -75,7 +76,7 @@ export function useOnline(
   useEffect(() => { currentLobbyRef.current = currentLobby; }, [currentLobby]);
 
   const isHost = currentLobby
-    ? currentLobby.players.find(p => p.id === myPlayerId.current)?.isHost ?? false
+    ? currentLobby.players.find(p => p.id === myPlayerIdRef.current)?.isHost ?? false
     : false;
 
   // ── Connect & register handlers ────────────────────────────────────────────
@@ -89,7 +90,8 @@ export function useOnline(
         // 1. Server assigns us a player ID
         unsubs.push(wsClient.on<ConnectedPayload>('connected', payload => {
           if (!payload) return;
-          myPlayerId.current = payload.player_id;
+          myPlayerIdRef.current = payload.player_id;
+          setMyPlayerIdState(payload.player_id);
           // Immediately set our display name
           wsClient.setName(playerName);
         }));
@@ -141,14 +143,18 @@ export function useOnline(
           if (!payload) return;
           setStartingGame(false);
           if (onGameBegin) {
-            // Use the ref (not state) so we always have the latest lobby players
+            // Use lobby players directly — they already have the correct server-assigned IDs.
+            // Avoid the fragile index-based mapping from player_names which breaks when
+            // currentLobbyRef is stale/null (causes myPlayerId mismatch → unresponsive game).
             const lobbyPlayers = currentLobbyRef.current?.players ?? [];
-            const players = payload.player_names.map((name, i) => ({
-              id: lobbyPlayers[i]?.id ?? `player-${i}`,
-              name,
-              isAI: false,
-            }));
-            onGameBegin(players, myPlayerId.current);
+            const players = lobbyPlayers.length > 0
+              ? lobbyPlayers.map(p => ({ id: p.id, name: p.name, isAI: false }))
+              : payload.player_names.map((name, i) => ({
+                  id: `player-${i}`,
+                  name,
+                  isAI: false,
+                }));
+            onGameBegin(players, myPlayerIdRef.current);
           }
         }));
 
@@ -189,6 +195,9 @@ export function useOnline(
   }, []);
 
   const startGame = useCallback(() => {
+    // Enforce minimum 2 players on client side before sending to server
+    const lobby = currentLobbyRef.current;
+    if (!lobby || lobby.players.length < 2) return false;
     wsClient.startGame();
     return true;
   }, []);
@@ -208,7 +217,8 @@ export function useOnline(
     isSearching,
     startingGame,
     isHost,
-    myPlayerId: myPlayerId.current,
+    // Return reactive state (not just ref.current) so consumers re-render when ID arrives
+    myPlayerId: myPlayerIdState,
     connectionError,
     createLobby,
     searchLobbies,

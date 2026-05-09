@@ -41,12 +41,32 @@ function OnlineGame({
   lobbyPlayers: Array<{ id: string; name: string; isAI?: boolean }>;
   onGameOver: (r: GameResult) => void;
 }) {
-  const { state, me, keyStates, typeLetter, deleteLetter, submitGuess } = useOnlineGame({
+  const { state, me, keyStates, waitingForOpponent, typeLetter, deleteLetter, submitGuess } = useOnlineGame({
     playerName,
     myPlayerId,
     lobbyPlayers,
     onGameOver,
   });
+
+  // Block the game entirely until there are 2+ players in the session
+  if (waitingForOpponent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 p-8 rounded-2xl"
+             style={{ background: 'var(--color-card)', boxShadow: '0 0 40px oklch(0.78 0.18 145 / 0.15)' }}>
+          <div className="w-12 h-12 rounded-full border-2 border-t-transparent animate-spin"
+               style={{ borderColor: 'var(--color-primary)' }} />
+          <p className="text-base font-black uppercase tracking-widest" style={{ color: 'var(--color-foreground)' }}>
+            Waiting for opponent…
+          </p>
+          <p className="text-xs" style={{ color: 'var(--color-muted-foreground)' }}>
+            The game will start once another player joins
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <GameLayout
       state={state} me={me} keyStates={keyStates}
