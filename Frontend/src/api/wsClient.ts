@@ -124,7 +124,7 @@ export class WordleWarsClient {
   private url: string;
   private shouldReconnect = true;
 
-  constructor(url = import.meta.env.VITE_WS_URL ?? 'ws://localhost:8080/ws') {
+  constructor(url = import.meta.env.VITE_WS_URL ?? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`) {
     this.url = url;
   }
 
