@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// ── Services ────────────────────────────────────────────────────────────
-	words := NewWordService(WordList)
+	words := NewWordService(AllowedGuessList, PossibleAnswerList)
 	nameStore := NewNameStore()
 	nameStore.StartCleanup() // ← background TTL goroutine
 	defer nameStore.Stop()
@@ -168,11 +168,11 @@ func handleMetrics(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&ms)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	writeJSON(w, http.StatusOK, map[string]any{
-		"goroutines":       runtime.NumGoroutine(),
-		"heap_alloc_mb":    float64(ms.HeapAlloc) / 1024 / 1024,
-		"heap_sys_mb":      float64(ms.HeapSys) / 1024 / 1024,
-		"sys_mb":           float64(ms.Sys) / 1024 / 1024,
-		"gc_cycles":        ms.NumGC,
+		"goroutines":    runtime.NumGoroutine(),
+		"heap_alloc_mb": float64(ms.HeapAlloc) / 1024 / 1024,
+		"heap_sys_mb":   float64(ms.HeapSys) / 1024 / 1024,
+		"sys_mb":        float64(ms.Sys) / 1024 / 1024,
+		"gc_cycles":     ms.NumGC,
 	})
 }
 

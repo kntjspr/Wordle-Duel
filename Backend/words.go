@@ -19,17 +19,24 @@ import (
 //go:embed allowed_guess.txt
 var allowedGuessRaw string
 
-// WordList is the server's authoritative 5-letter allowed-guesses list.
-// Loaded from local file: Backend/allowed_guess.txt (embedded at build time).
-var WordList = mustLoadEmbeddedWordList()
+//go:embed possible_answers.txt
+var possibleAnswersRaw string
 
-func mustLoadEmbeddedWordList() []string {
-	words, err := loadWordListFromText(allowedGuessRaw)
+// AllowedGuessList is the server's authoritative 5-letter guess-validation list.
+// Loaded from local file: Backend/allowed_guess.txt (embedded at build time).
+var AllowedGuessList = mustLoadEmbeddedWordList(allowedGuessRaw, "allowed guesses")
+
+// PossibleAnswerList is the server's answer pool for random word selection.
+// Loaded from local file: Backend/possible_answers.txt (embedded at build time).
+var PossibleAnswerList = mustLoadEmbeddedWordList(possibleAnswersRaw, "possible answers")
+
+func mustLoadEmbeddedWordList(raw string, label string) []string {
+	words, err := loadWordListFromText(raw)
 	if err != nil {
-		panic(fmt.Sprintf("failed to load embedded word list: %v", err))
+		panic(fmt.Sprintf("failed to load embedded %s list: %v", label, err))
 	}
 	if len(words) == 0 {
-		panic("embedded word list is empty")
+		panic(fmt.Sprintf("embedded %s list is empty", label))
 	}
 	return words
 }
@@ -63,13 +70,16 @@ type WordService struct {
 	mu      sync.RWMutex
 	words   []string
 	wordSet map[string]struct{} // O(1) lookup
+	answers []string
 }
 
-// NewWordService builds the word service from a list of words.
-func NewWordService(words []string) *WordService {
+// NewWordService builds the word service from a guess-validation list and
+// a possible-answer list.
+func NewWordService(words []string, answers []string) *WordService {
 	ws := &WordService{
 		words:   make([]string, 0, len(words)),
 		wordSet: make(map[string]struct{}, len(words)),
+		answers: make([]string, 0, len(answers)),
 	}
 	for _, w := range words {
 		w = strings.ToLower(strings.TrimSpace(w))
@@ -81,6 +91,23 @@ func NewWordService(words []string) *WordService {
 			ws.wordSet[w] = struct{}{}
 		}
 	}
+
+	seenAnswers := make(map[string]struct{}, len(answers))
+	for _, w := range answers {
+		w = strings.ToLower(strings.TrimSpace(w))
+		if len([]rune(w)) != WordLength {
+			continue
+		}
+		if _, exists := seenAnswers[w]; exists {
+			continue
+		}
+		seenAnswers[w] = struct{}{}
+		ws.answers = append(ws.answers, w)
+	}
+
+	if len(ws.answers) == 0 {
+		ws.answers = append(ws.answers, ws.words...)
+	}
 	return ws
 }
 
@@ -88,10 +115,10 @@ func NewWordService(words []string) *WordService {
 func (ws *WordService) Random() string {
 	ws.mu.RLock()
 	defer ws.mu.RUnlock()
-	if len(ws.words) == 0 {
+	if len(ws.answers) == 0 {
 		return "crane" // fallback
 	}
-	return ws.words[rand.Intn(len(ws.words))]
+	return ws.answers[rand.Intn(len(ws.answers))]
 }
 
 // IsValid returns true if the word is in the valid word list. Thread-safe.
