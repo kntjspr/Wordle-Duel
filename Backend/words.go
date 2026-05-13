@@ -14,6 +14,10 @@ import (
 //
 // The server is the ONLY source of valid words. Clients never see the answer
 // until game_over. Word validation happens here, not on the client.
+//
+// Dataset references used by embedded wordlists:
+// - possible_answers.txt: https://gist.github.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b
+// - allowed_guess.txt: https://gist.github.com/cfreshman/cdcdf777450c5b5301e439061d29694c
 // ══════════════════════════════════════════════════════════════════════════════
 
 //go:embed allowed_guess.txt

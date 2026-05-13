@@ -141,6 +141,13 @@ Win condition:
 | `POST` | `/api/words/validate` | `{ word }` → `{ valid: bool }` |
 | `GET` | `/health` | Health check |
 
+## Wordlist Dataset References
+
+The backend embeds wordlists from the following sources:
+
+- `possible_answers.txt` (answer pool): https://gist.github.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b
+- `allowed_guess.txt` (valid guess dictionary): https://gist.github.com/cfreshman/cdcdf777450c5b5301e439061d29694c
+
 ---
 
 ## Frontend Integration
