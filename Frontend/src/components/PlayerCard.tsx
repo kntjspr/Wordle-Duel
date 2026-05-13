@@ -10,7 +10,8 @@ const WORD_LENGTH = 5;
 const MAX_ROWS = 5;
 
 export function PlayerCard({ player, isMe }: Props) {
-  const visibleGuesses = isMe ? player.guesses : getVisibleGuesses(player);
+  const shouldMaskAbsentTiles = !isMe && !player.isAI;
+  const visibleGuesses = shouldMaskAbsentTiles ? getVisibleGuesses(player) : player.guesses;
   const score = totalScore(player);
 
   const status = player.hasWon
@@ -84,7 +85,12 @@ export function PlayerCard({ player, isMe }: Props) {
                     style={{
                       background: bg,
                       borderColor: tileState === 'empty' ? 'var(--tile-border)' : bg,
-                      color: (tileState === 'correct' || tileState === 'present') ? 'white' : 'transparent',
+                      color:
+                        tileState === 'correct' || tileState === 'present'
+                          ? 'white'
+                          : tileState === 'absent' && !shouldMaskAbsentTiles
+                          ? 'var(--color-muted-foreground)'
+                          : 'transparent',
                     }}
                   >
                     {letter.toUpperCase()}

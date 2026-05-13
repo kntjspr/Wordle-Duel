@@ -99,6 +99,9 @@ export function useGameEngine({ playerName, gameMode, lobbyPlayers, onGameOver }
     const delay = getAIDelay(config);
 
     const timer = setTimeout(() => {
+      // Timer has fired; remove it so the scheduler can queue the AI's next turn.
+      aiTimers.current.delete(aiPlayer.id);
+
       const guess = pickAIGuess(currentList, currentGuesses, aiPlayer.aiDifficulty ?? 'medium');
       const newRow = buildGuessRow(guess, currentWord);
       const won = isCorrectGuess(guess, currentWord);
