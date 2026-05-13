@@ -50,29 +50,31 @@ const (
 )
 
 type Lobby struct {
-	mu       sync.RWMutex
-	ID       string
-	Code     string
-	HostID   string
-	Status   LobbyStatus
-	players  map[string]*Client // playerID → connection
-	game     *GameState
-	events   chan LobbyEvent
-	done     chan struct{}
-	doneOnce sync.Once
-	hub      *Hub
+	mu        sync.RWMutex
+	ID        string
+	Code      string
+	HostID    string
+	Status    LobbyStatus
+	players   map[string]*Client // playerID → connection
+	playerIDs []string           // ordered list of playerIDs
+	game      *GameState
+	events    chan LobbyEvent
+	done      chan struct{}
+	doneOnce  sync.Once
+	hub       *Hub
 }
 
 func NewLobby(id, code, hostID string, hub *Hub) *Lobby {
 	return &Lobby{
-		ID:      id,
-		Code:    code,
-		HostID:  hostID,
-		Status:  LobbyWaiting,
-		players: make(map[string]*Client, MaxPlayers),
-		events:  make(chan LobbyEvent, 64),
-		done:    make(chan struct{}),
-		hub:     hub,
+		ID:        id,
+		Code:      code,
+		HostID:    hostID,
+		Status:    LobbyWaiting,
+		players:   make(map[string]*Client, MaxPlayers),
+		playerIDs: make([]string, 0, MaxPlayers),
+		events:    make(chan LobbyEvent, 64),
+		done:      make(chan struct{}),
+		hub:       hub,
 	}
 }
 
@@ -151,6 +153,7 @@ func (l *Lobby) onPlayerJoin(playerID string) {
 
 	l.mu.Lock()
 	l.players[playerID] = client
+	l.playerIDs = append(l.playerIDs, playerID)
 	l.mu.Unlock()
 
 	// Confirm join to the new player
@@ -164,15 +167,20 @@ func (l *Lobby) onPlayerJoin(playerID string) {
 func (l *Lobby) onPlayerLeave(playerID string) {
 	l.mu.Lock()
 	delete(l.players, playerID)
+
+	for i, id := range l.playerIDs {
+		if id == playerID {
+			l.playerIDs = append(l.playerIDs[:i], l.playerIDs[i+1:]...)
+			break
+		}
+	}
+
 	remaining := len(l.players)
 	hostLeaving := playerID == l.HostID
 
 	// Transfer host if needed
 	if hostLeaving && remaining > 0 {
-		for id := range l.players {
-			l.HostID = id
-			break
-		}
+		l.HostID = l.playerIDs[0]
 	}
 	l.mu.Unlock()
 
@@ -198,8 +206,11 @@ func (l *Lobby) onStartGame(playerID string) {
 		}
 		return
 	}
-	if len(l.players) < 1 {
+	if len(l.players) < 2 {
 		l.mu.Unlock()
+		if c, ok := l.hub.getClient(playerID); ok {
+			c.send(MsgError, ErrorPayload{Message: "Need at least 2 players to start"})
+		}
 		return
 	}
 	l.Status = LobbyPlaying
@@ -212,7 +223,8 @@ func (l *Lobby) onStartGame(playerID string) {
 	l.mu.RLock()
 	playerList := make([]LobbyPlayerInfo, 0, len(l.players))
 	playerNames := make([]string, 0, len(l.players))
-	for id, c := range l.players {
+	for _, id := range l.playerIDs {
+		c := l.players[id]
 		c.mu.RLock()
 		name := c.Name
 		c.mu.RUnlock()
@@ -304,7 +316,8 @@ func (l *Lobby) snapshot() LobbyState {
 
 	players := make([]LobbyPlayerInfo, 0, len(l.players))
 	hostName := ""
-	for id, c := range l.players {
+	for _, id := range l.playerIDs {
+		c := l.players[id]
 		c.mu.RLock()
 		name := c.Name
 		c.mu.RUnlock()
