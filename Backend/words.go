@@ -16,15 +16,15 @@ import (
 // until game_over. Word validation happens here, not on the client.
 // ══════════════════════════════════════════════════════════════════════════════
 
-//go:embed allowed_guesses.txt
-var allowedGuessesRaw string
+//go:embed allowed_guess.txt
+var allowedGuessRaw string
 
 // WordList is the server's authoritative 5-letter allowed-guesses list.
-// Source: https://gist.github.com/cfreshman/cdcdf777450c5b5301e439061d29694c
+// Loaded from local file: Backend/allowed_guess.txt (embedded at build time).
 var WordList = mustLoadEmbeddedWordList()
 
 func mustLoadEmbeddedWordList() []string {
-	words, err := loadWordListFromText(allowedGuessesRaw)
+	words, err := loadWordListFromText(allowedGuessRaw)
 	if err != nil {
 		panic(fmt.Sprintf("failed to load embedded word list: %v", err))
 	}
