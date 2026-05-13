@@ -132,12 +132,18 @@ docker compose up --build
 
 Then open:
 
-`http://localhost:5173`
+`http://localhost:5174`
 
 ## Services
 
-- `frontend`: React app served by Nginx on port `5173` (container port `80`)
+- `frontend`: React app served by Nginx on host port `5174` by default (container port `80`)
 - `backend`: Go API + WebSocket server (internal port `8080`)
+
+Optional: override frontend host port with `FRONTEND_PORT`, for example:
+
+```bash
+FRONTEND_PORT=5173 docker compose up --build
+```
 
 Nginx proxies:
 - `/api/*` → backend REST API
