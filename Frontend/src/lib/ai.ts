@@ -80,7 +80,7 @@ export interface AIConfig {
 }
 
 export const AI_CONFIGS: Record<string, AIConfig> = {
-  easy:   { difficulty: 'easy',   minDelay: 4000, maxDelay: 8000 },
+  easy:   { difficulty: 'easy',   minDelay: 5000, maxDelay: 9000 },
   medium: { difficulty: 'medium', minDelay: 2500, maxDelay: 5000 },
   hard:   { difficulty: 'hard',   minDelay: 1200, maxDelay: 3000 },
 };
@@ -88,12 +88,15 @@ export const AI_CONFIGS: Record<string, AIConfig> = {
 export function pickAIGuess(
   wordList: string[],
   guesses: GuessRow[],
-  difficulty: 'easy' | 'medium' | 'hard' = 'medium'
+  difficulty: 'easy' | 'medium' | 'hard' = 'easy'
 ): string {
   const submitted = guesses.filter(r => r.isSubmitted);
 
   // First guess: use opener
   if (submitted.length === 0) {
+    if (difficulty === 'easy') {
+      return wordList[Math.floor(Math.random() * wordList.length)];
+    }
     const opener = OPENERS[Math.floor(Math.random() * OPENERS.length)];
     return opener;
   }
@@ -106,6 +109,13 @@ export function pickAIGuess(
   }
 
   if (difficulty === 'easy') {
+    // Easy: sometimes ignore constraints and play a noisy random guess.
+    if (Math.random() < 0.55) {
+      const used = new Set(submitted.map(r => r.tiles.map(t => t.letter).join('').toLowerCase()));
+      const noisyPool = wordList.filter(w => !used.has(w.toLowerCase()));
+      const pool = noisyPool.length > 0 ? noisyPool : wordList;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
     // Easy: pick randomly from all remaining
     return remaining[Math.floor(Math.random() * remaining.length)];
   }

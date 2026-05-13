@@ -19,7 +19,7 @@ function makePlayer(id: string, name: string, isAI = false): Player {
     isEliminated: false,
     isReady: false,
     isAI,
-    aiDifficulty: isAI ? 'medium' : undefined,
+    aiDifficulty: isAI ? 'easy' : undefined,
   };
 }
 
@@ -95,14 +95,14 @@ export function useGameEngine({ playerName, gameMode, lobbyPlayers, onGameOver }
     if (aiPlayer.hasWon || aiPlayer.isEliminated) return;
     if (currentGuesses.length >= MAX_ROWS) return;
 
-    const config = AI_CONFIGS[aiPlayer.aiDifficulty ?? 'medium'];
+    const config = AI_CONFIGS[aiPlayer.aiDifficulty ?? 'easy'];
     const delay = getAIDelay(config);
 
     const timer = setTimeout(() => {
       // Timer has fired; remove it so the scheduler can queue the AI's next turn.
       aiTimers.current.delete(aiPlayer.id);
 
-      const guess = pickAIGuess(currentList, currentGuesses, aiPlayer.aiDifficulty ?? 'medium');
+      const guess = pickAIGuess(currentList, currentGuesses, aiPlayer.aiDifficulty ?? 'easy');
       const newRow = buildGuessRow(guess, currentWord);
       const won = isCorrectGuess(guess, currentWord);
 
