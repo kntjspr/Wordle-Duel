@@ -103,6 +103,13 @@ func NewWordService(words []string, answers []string) *WordService {
 		}
 		seenAnswers[w] = struct{}{}
 		ws.answers = append(ws.answers, w)
+
+		// Ensure every possible answer is a valid guess even if it is missing
+		// from the allowed-guess list.
+		if _, exists := ws.wordSet[w]; !exists {
+			ws.words = append(ws.words, w)
+			ws.wordSet[w] = struct{}{}
+		}
 	}
 
 	if len(ws.answers) == 0 {

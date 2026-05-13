@@ -143,10 +143,13 @@ func TestPlayerState_MaxAttempts(t *testing.T) {
 func TestWordService(t *testing.T) {
 	ws := NewWordService(
 		[]string{"crane", "slate", "audio", "train", "brave"},
-		[]string{"slate", "brave"},
+		[]string{"slate", "brave", "glyph"},
 	)
 	if !ws.IsValid("crane") {
 		t.Error("crane should be valid")
+	}
+	if !ws.IsValid("glyph") {
+		t.Error("glyph should be valid because it is in possible answers")
 	}
 	if ws.IsValid("zzzzz") {
 		t.Error("zzzzz should not be valid")
@@ -155,7 +158,7 @@ func TestWordService(t *testing.T) {
 	if len(word) != WordLength {
 		t.Errorf("random word length: want %d, got %d", WordLength, len(word))
 	}
-	if word != "slate" && word != "brave" {
+	if word != "slate" && word != "brave" && word != "glyph" {
 		t.Errorf("random word %q was not from possible answers list", word)
 	}
 }
