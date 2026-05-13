@@ -162,16 +162,26 @@ func (gs *GameState) ProcessGuess(playerID, guess string) (
 	return result, update, gameOver
 }
 
-// checkGameOver returns true if all players are done.
+// checkGameOver returns true if all players are done, or if any player has won.
 func (gs *GameState) checkGameOver() bool {
 	gs.mu.RLock()
 	defer gs.mu.RUnlock()
+
+	allDone := true
 	for _, ps := range gs.Players {
-		if !ps.IsDone() {
-			return false
+		ps.mu.Lock()
+		hasWon := ps.HasWon
+		isDone := hasWon || ps.IsEliminated || len(ps.Guesses) >= MaxAttempts
+		ps.mu.Unlock()
+
+		if hasWon {
+			return true
+		}
+		if !isDone {
+			allDone = false
 		}
 	}
-	return true
+	return allDone
 }
 
 // BuildGameOverPayload assembles the final results packet.
