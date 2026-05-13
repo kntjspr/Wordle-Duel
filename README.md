@@ -23,17 +23,17 @@ graph TD
         Hub[Hub / Registry<br/>sync.RWMutex]
         WordService[Word API<br/>Thread-Safe]
         
-        subgraph Player 1 Goroutines
+        subgraph P1[Player 1 Goroutines]
             WS_Read1
             WS_Write1
         end
         
-        subgraph Player 2 Goroutines
+        subgraph P2[Player 2 Goroutines]
             WS_Read2
             WS_Write2
         end
 
-        subgraph Lobby 1 Goroutine
+        subgraph Lobby1[Lobby 1 Goroutine]
             LobbyLoop[Lobby Event Loop]
             GameState[Server-Authoritative<br/>Game State]
         end
@@ -41,9 +41,9 @@ graph TD
         HTTP -->|Upgrade /ws| Hub
         HTTP -->|GET /api/words| WordService
         
-        Hub -->|Manages| Player 1 Goroutines
-        Hub -->|Manages| Player 2 Goroutines
-        Hub -->|Manages| LobbyLoop
+        Hub -->|Manages| P1
+        Hub -->|Manages| P2
+        Hub -->|Manages| Lobby1
         
         WS_Read1 -->|Events chan| LobbyLoop
         WS_Read2 -->|Events chan| LobbyLoop
