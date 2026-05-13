@@ -17,11 +17,36 @@ interface Props {
 // ─── AI wrapper (local game engine) ──────────────────────────────────────────
 
 function AIGame({ playerName, onGameOver }: { playerName: string; onGameOver: (r: GameResult) => void }) {
-  const { state, me, keyStates, typeLetter, deleteLetter, submitGuess } = useGameEngine({
+  const { state, me, keyStates, initError, typeLetter, deleteLetter, submitGuess } = useGameEngine({
     playerName,
     gameMode: 'ai',
     onGameOver,
   });
+
+  if (initError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div
+          className="w-full max-w-xl rounded-2xl p-6 border"
+          style={{
+            background: 'var(--color-card)',
+            borderColor: 'var(--color-destructive)',
+          }}
+        >
+          <p className="text-xs uppercase tracking-widest font-black mb-2" style={{ color: 'var(--color-destructive)' }}>
+            Game Initialization Error
+          </p>
+          <p className="text-sm font-semibold" style={{ color: 'var(--color-foreground)' }}>
+            The game could not load the server word list.
+          </p>
+          <p className="text-xs mt-2" style={{ color: 'var(--color-muted-foreground)' }}>
+            {initError}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <GameLayout
       state={state} me={me} keyStates={keyStates}

@@ -36,6 +36,7 @@ export function useGameEngine({ playerName, gameMode, lobbyPlayers, onGameOver }
   const myId = 'local-player';
   const aiTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [wordList, setWordList] = useState<string[]>([]);
+  const [initError, setInitError] = useState<string | null>(null);
   const [state, setState] = useState<GameState>({
     word: '',
     players: [],
@@ -53,28 +54,34 @@ export function useGameEngine({ playerName, gameMode, lobbyPlayers, onGameOver }
   // ── Init game ──────────────────────────────────────────────────────────────
   useEffect(() => {
     async function init() {
-      const [word, list] = await Promise.all([fetchRandomWord(), fetchWordList()]);
-      const validList = list.filter(w => w.length === WORD_LENGTH);
+      try {
+        setInitError(null);
+        const [word, list] = await Promise.all([fetchRandomWord(), fetchWordList()]);
+        const validList = list.filter(w => w.length === WORD_LENGTH);
 
-      let players: Player[];
+        let players: Player[];
 
-      if (gameMode === 'ai') {
-        players = [
-          makePlayer(myId, playerName, false),
-          makePlayer('ai-1', 'WordBot α', true),
-        ];
-      } else {
-        // Online mode: use lobby players + local player
-        players = (lobbyPlayers ?? []).map(lp =>
-          makePlayer(lp.id, lp.name, lp.isAI ?? false)
-        );
-        if (!players.find(p => p.id === myId)) {
-          players.unshift(makePlayer(myId, playerName, false));
+        if (gameMode === 'ai') {
+          players = [
+            makePlayer(myId, playerName, false),
+            makePlayer('ai-1', 'WordBot α', true),
+          ];
+        } else {
+          // Online mode: use lobby players + local player
+          players = (lobbyPlayers ?? []).map(lp =>
+            makePlayer(lp.id, lp.name, lp.isAI ?? false)
+          );
+          if (!players.find(p => p.id === myId)) {
+            players.unshift(makePlayer(myId, playerName, false));
+          }
         }
-      }
 
-      setState(s => ({ ...s, word, players, wordList: validList }));
-      setWordList(validList);
+        setState(s => ({ ...s, word, players, wordList: validList }));
+        setWordList(validList);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load word data';
+        setInitError(message);
+      }
     }
     init();
     return () => {
@@ -248,6 +255,7 @@ export function useGameEngine({ playerName, gameMode, lobbyPlayers, onGameOver }
     state,
     me,
     keyStates,
+    initError,
     typeLetter,
     deleteLetter,
     submitGuess,
