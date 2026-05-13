@@ -1,6 +1,6 @@
 # Wordle Duel
 
-Game Project for PDC.
+Game Project for CS323 - Parallel and Distributed Computing
 
 ## Run with Docker
 
