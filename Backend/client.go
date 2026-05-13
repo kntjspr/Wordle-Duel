@@ -38,13 +38,15 @@ var upgrader = websocket.Upgrader{
 
 // Client represents one WebSocket connection (one player).
 type Client struct {
-	mu      sync.RWMutex
-	ID      string
-	Name    string
-	LobbyID string
-	conn    *websocket.Conn
-	outbox  chan []byte // outbound message queue
-	hub     *Hub
+	mu           sync.RWMutex
+	ID           string
+	Name         string
+	LobbyID      string
+	conn         *websocket.Conn
+	outbox       chan []byte // outbound message queue
+	hub          *Hub
+	outboxMu     sync.Mutex
+	outboxClosed bool
 }
 
 // NewClient creates a Client and begins its goroutines.
@@ -150,6 +152,12 @@ func (c *Client) send(msgType MsgType, payload any) {
 
 // sendRaw queues pre-marshalled bytes (used by lobby.broadcast for efficiency).
 func (c *Client) sendRaw(data []byte) {
+	c.outboxMu.Lock()
+	defer c.outboxMu.Unlock()
+	if c.outboxClosed {
+		return
+	}
+
 	select {
 	case c.outbox <- data:
 	default:
@@ -157,14 +165,13 @@ func (c *Client) sendRaw(data []byte) {
 	}
 }
 
-// closeOutbox drains and closes the outbox channel.
+// closeOutbox closes the outbound channel once.
 func (c *Client) closeOutbox() {
-	select {
-	case _, ok := <-c.outbox:
-		if ok {
-			close(c.outbox)
-		}
-	default:
-		close(c.outbox)
+	c.outboxMu.Lock()
+	defer c.outboxMu.Unlock()
+	if c.outboxClosed {
+		return
 	}
+	c.outboxClosed = true
+	close(c.outbox)
 }

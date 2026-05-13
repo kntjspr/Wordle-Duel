@@ -50,16 +50,17 @@ const (
 )
 
 type Lobby struct {
-	mu      sync.RWMutex
-	ID      string
-	Code    string
-	HostID  string
-	Status  LobbyStatus
-	players map[string]*Client // playerID → connection
-	game    *GameState
-	events  chan LobbyEvent
-	done    chan struct{}
-	hub     *Hub
+	mu       sync.RWMutex
+	ID       string
+	Code     string
+	HostID   string
+	Status   LobbyStatus
+	players  map[string]*Client // playerID → connection
+	game     *GameState
+	events   chan LobbyEvent
+	done     chan struct{}
+	doneOnce sync.Once
+	hub      *Hub
 }
 
 func NewLobby(id, code, hostID string, hub *Hub) *Lobby {
@@ -180,7 +181,7 @@ func (l *Lobby) onPlayerLeave(playerID string) {
 
 	// Close lobby if empty
 	if remaining == 0 {
-		close(l.done)
+		l.closeDone()
 	}
 }
 
@@ -290,7 +291,7 @@ func (l *Lobby) onGuess(playerID, guess string) {
 func (l *Lobby) Enqueue(evt LobbyEvent) {
 	select {
 	case l.events <- evt:
-	case <-time.After(5 * time.Second):
+	default:
 		log.Printf("[Lobby %s] event queue full, dropping %s", l.ID, evt.Type)
 	case <-l.done:
 	}
@@ -342,16 +343,17 @@ func (l *Lobby) broadcast(msgType MsgType, payload any, excludeID string) {
 		return
 	}
 
-	// Send to each client concurrently
-	var wg sync.WaitGroup
+	// sendRaw is non-blocking, so serial fan-out is lower overhead than
+	// spawning one goroutine per recipient.
 	for _, c := range clients {
-		wg.Add(1)
-		go func(cl *Client) {
-			defer wg.Done()
-			cl.sendRaw(data)
-		}(c)
+		c.sendRaw(data)
 	}
-	wg.Wait()
+}
+
+func (l *Lobby) closeDone() {
+	l.doneOnce.Do(func() {
+		close(l.done)
+	})
 }
 
 // ─── Random code ──────────────────────────────────────────────────────────────
