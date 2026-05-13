@@ -47,10 +47,18 @@ func TestEvaluateGuess_Present(t *testing.T) {
 func TestEvaluateGuess_DuplicateLetters(t *testing.T) {
 	// word=abbey, guess=aabby: a-correct, a-absent, b-correct, b-present, y-absent
 	tiles := EvaluateGuess("aabby", "abbey")
-	if tiles[0].State != TileCorrect { t.Errorf("tile 0: want correct, got %s", tiles[0].State) }
-	if tiles[1].State != TileAbsent  { t.Errorf("tile 1: want absent, got %s",  tiles[1].State) }
-	if tiles[2].State != TileCorrect { t.Errorf("tile 2: want correct, got %s", tiles[2].State) }
-	if tiles[3].State != TilePresent { t.Errorf("tile 3: want present, got %s", tiles[3].State) }
+	if tiles[0].State != TileCorrect {
+		t.Errorf("tile 0: want correct, got %s", tiles[0].State)
+	}
+	if tiles[1].State != TileAbsent {
+		t.Errorf("tile 1: want absent, got %s", tiles[1].State)
+	}
+	if tiles[2].State != TileCorrect {
+		t.Errorf("tile 2: want correct, got %s", tiles[2].State)
+	}
+	if tiles[3].State != TilePresent {
+		t.Errorf("tile 3: want present, got %s", tiles[3].State)
+	}
 }
 
 func TestScoreRow(t *testing.T) {
@@ -133,7 +141,10 @@ func TestPlayerState_MaxAttempts(t *testing.T) {
 }
 
 func TestWordService(t *testing.T) {
-	ws := NewWordService([]string{"crane", "slate", "audio", "train", "brave"})
+	ws := NewWordService(
+		[]string{"crane", "slate", "audio", "train", "brave"},
+		[]string{"slate", "brave"},
+	)
 	if !ws.IsValid("crane") {
 		t.Error("crane should be valid")
 	}
@@ -143,6 +154,9 @@ func TestWordService(t *testing.T) {
 	word := ws.Random()
 	if len(word) != WordLength {
 		t.Errorf("random word length: want %d, got %d", WordLength, len(word))
+	}
+	if word != "slate" && word != "brave" {
+		t.Errorf("random word %q was not from possible answers list", word)
 	}
 }
 
