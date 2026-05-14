@@ -62,12 +62,15 @@ export function useOnline(
   playerName: string,
   { onGameBegin }: UseOnlineOptions = {}
 ) {
-  const myPlayerIdRef = useRef<string>('');   // always-current ref for WS closures
-  const [myPlayerIdState, setMyPlayerIdState] = useState<string>(''); // reactive for consumers
-  const currentLobbyRef = useRef<LobbyInfo | null>(null); // always-current ref for closures
-  const [view, setView] = useState<LobbyView>('choose');
+  const initialLobby = wsClient.lastLobbyState ? toLobbyInfo(wsClient.lastLobbyState) : null;
+  const initialView: LobbyView = initialLobby ? 'room' : 'choose';
+
+  const myPlayerIdRef = useRef<string>(wsClient.playerId);   // always-current ref for WS closures
+  const [myPlayerIdState, setMyPlayerIdState] = useState<string>(wsClient.playerId); // reactive for consumers
+  const currentLobbyRef = useRef<LobbyInfo | null>(initialLobby); // always-current ref for closures
+  const [view, setView] = useState<LobbyView>(initialView);
   const [lobbies, setLobbies] = useState<LobbyInfo[]>([]);
-  const [currentLobby, setCurrentLobby] = useState<LobbyInfo | null>(null);
+  const [currentLobby, setCurrentLobby] = useState<LobbyInfo | null>(initialLobby);
   const [isSearching, setIsSearching] = useState(false);
   const [startingGame, setStartingGame] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -86,6 +89,13 @@ export function useOnline(
     wsClient.connect()
       .then(() => {
         setConnectionError(null);
+
+        // Handle hot-remounts where connected was already received
+        if (wsClient.playerId) {
+          myPlayerIdRef.current = wsClient.playerId;
+          setMyPlayerIdState(wsClient.playerId);
+          wsClient.setName(playerName);
+        }
 
         // 1. Server assigns us a player ID
         unsubs.push(wsClient.on<ConnectedPayload>('connected', payload => {

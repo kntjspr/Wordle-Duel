@@ -115,6 +115,8 @@ export type ConnectionState = 'idle' | 'connecting' | 'open' | 'closed';
 // ─── Client class ─────────────────────────────────────────────────────────────
 
 export class WordleWarsClient {
+  public playerId: string = '';
+  public lastLobbyState: LobbyState | null = null;
   private ws: WebSocket | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handlers = new Map<MsgType, Handler<any>[]>();
@@ -166,6 +168,15 @@ export class WordleWarsClient {
         for (const line of lines) {
           try {
             const env: Envelope = JSON.parse(line);
+            
+            if (env.type === 'connected') {
+              this.playerId = (env.payload as ConnectedPayload).player_id;
+            } else if (env.type === 'lobby_joined' || env.type === 'lobby_created' || env.type === 'lobby_update') {
+              this.lastLobbyState = env.payload as LobbyState;
+            } else if (env.type === 'lobby_left') {
+              this.lastLobbyState = null;
+            }
+
             this.handlers.get(env.type)?.forEach(h => h(env.payload));
           } catch {
             console.warn('[WS] bad message:', line);
