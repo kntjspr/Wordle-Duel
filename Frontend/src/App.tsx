@@ -4,6 +4,7 @@ import { LandingPage } from './components/LandingPage';
 import { LobbyScreen } from './components/LobbyScreen';
 import { GameScreen } from './components/GameScreen';
 import { ResultsScreen } from './components/ResultsScreen';
+import { wsClient } from './api/wsClient';
 
 interface AppState {
   screen: GameScreenType;
@@ -90,7 +91,13 @@ export default function App() {
   }
 
   function handleHome() {
-    setApp(prev => ({ ...prev, screen: 'landing', lastResult: null }));
+    if (app.gameMode === 'online') {
+      wsClient.leaveLobby();
+      wsClient.lastLobbyState = null;
+      setApp(prev => ({ ...prev, screen: 'lobby', lastResult: null }));
+    } else {
+      setApp(prev => ({ ...prev, screen: 'landing', lastResult: null }));
+    }
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
