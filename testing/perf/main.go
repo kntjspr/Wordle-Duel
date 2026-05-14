@@ -422,10 +422,10 @@ func main() {
 		players int
 	}
 	scenarios := []scenario{
-		{"Baseline — 1 lobby · 2 players", 1, 2},
-		{"Light    — 2 lobbies · 2 players", 2, 2},
-		{"Medium   — 5 lobbies · 2 players", 5, 2},
-		{"Stress   — 10 lobbies · 2 players", 10, 2},
+		{"Baseline (1 lobby · 5 players)", 1, 5},
+		{"Light    (2 lobbies · 5 players)", 2, 5},
+		{"Medium   (5 lobbies · 5 players)", 5, 5},
+		{"Stress   (10 lobbies · 5 players)", 10, 5},
 	}
 
 	results := make([]ScenarioResult, 0, len(scenarios))

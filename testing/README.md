@@ -8,7 +8,17 @@ Contains the standalone performance visualisation report for the Wordle Duel Go 
 |------|---------|
 | `performance-report.html` | Single-column brochure-ready chart report (open in any browser) |
 
-## How to open
+## How to run the test
+
+```bash
+# Run against the local backend (default)
+.\run_perf.ps1 -StartBackend
+
+# Run against the live production deployment
+.\run_perf.ps1 -Prod
+```
+
+## How to open the report
 
 ```bash
 # Windows — double-click or:
