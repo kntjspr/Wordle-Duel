@@ -57,12 +57,12 @@ type Envelope struct {
 
 // Bot is a single simulated player with a live WebSocket connection.
 type Bot struct {
-	conn        *websocket.Conn
-	ID          string // server-assigned player ID
-	Name        string
-	mu          sync.Mutex
-	subs        map[string][]chan json.RawMessage
-	closed      chan struct{}
+	conn   *websocket.Conn
+	ID     string // server-assigned player ID
+	Name   string
+	mu     sync.Mutex
+	subs   map[string][]chan json.RawMessage
+	closed chan struct{}
 	// Pre-subscribed before readLoop starts so we never miss early messages.
 	ConnectedCh chan json.RawMessage
 }
@@ -471,10 +471,10 @@ func main() {
 		players int // per lobby (min 2)
 	}
 	scenarios := []scenario{
-		{"Baseline (1 lobby · 2 players)", 1, 2},
-		{"Light    (2 lobbies · 2 players)", 2, 2},
-		{"Medium   (5 lobbies · 2 players)", 5, 2},
-		{"Stress   (10 lobbies · 2 players)", 10, 2},
+		{"Baseline (1 lobby · 5 players)", 1, 5},
+		{"Light    (2 lobbies · 5 players)", 2, 5},
+		{"Medium   (5 lobbies · 5 players)", 5, 5},
+		{"Stress   (10 lobbies · 5 players)", 10, 5},
 	}
 
 	results := make([]ScenarioResult, 0, len(scenarios))
