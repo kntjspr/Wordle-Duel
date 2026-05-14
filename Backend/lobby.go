@@ -289,9 +289,15 @@ func (l *Lobby) onGuess(playerID, guess string) {
 	if gameOver {
 		payload := game.BuildGameOverPayload()
 		l.broadcast(MsgGameOver, payload, "")
+		
 		l.mu.Lock()
-		l.Status = LobbyFinished
+		l.Status = LobbyWaiting
+		l.game = nil
 		l.mu.Unlock()
+
+		// Broadcast update so clients see status=waiting and can start a new game
+		l.broadcast(MsgLobbyUpdate, l.snapshot(), "")
+
 		log.Printf("[Lobby %s] game over, winner=%s word=%s",
 			l.ID, payload.WinnerName, payload.Word)
 	}
