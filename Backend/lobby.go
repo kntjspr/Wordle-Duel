@@ -88,8 +88,8 @@ func (l *Lobby) Run() {
 		l.hub.removeLobby(l.ID)
 	}()
 
-	// Inactivity timeout: close lobby if empty for 60s
-	inactivityTimer := time.NewTimer(60 * time.Second)
+	// Inactivity timeout: close lobby if empty for 5m
+	inactivityTimer := time.NewTimer(5 * time.Minute)
 	defer inactivityTimer.Stop()
 
 	for {
@@ -103,7 +103,7 @@ func (l *Lobby) Run() {
 				default:
 				}
 			}
-			inactivityTimer.Reset(60 * time.Second)
+			inactivityTimer.Reset(5 * time.Minute)
 
 		case <-inactivityTimer.C:
 			l.mu.RLock()
@@ -113,7 +113,7 @@ func (l *Lobby) Run() {
 				log.Printf("[Lobby %s] empty timeout, closing", l.ID)
 				return
 			}
-			inactivityTimer.Reset(60 * time.Second)
+			inactivityTimer.Reset(5 * time.Minute)
 
 		case <-l.done:
 			return
@@ -154,6 +154,10 @@ func (l *Lobby) onPlayerJoin(playerID string) {
 	l.mu.Lock()
 	l.players[playerID] = client
 	l.playerIDs = append(l.playerIDs, playerID)
+	// If the lobby was empty, the first person to join becomes the new host
+	if len(l.players) == 1 {
+		l.HostID = playerID
+	}
 	l.mu.Unlock()
 
 	// Confirm join to the new player
@@ -186,11 +190,6 @@ func (l *Lobby) onPlayerLeave(playerID string) {
 
 	l.broadcast(MsgLobbyUpdate, l.snapshot(), "")
 	log.Printf("[Lobby %s] player %s left (%d remaining)", l.ID, playerID, remaining)
-
-	// Close lobby if empty
-	if remaining == 0 {
-		l.closeDone()
-	}
 }
 
 func (l *Lobby) onStartGame(playerID string) {

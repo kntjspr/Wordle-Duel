@@ -117,6 +117,7 @@ export type ConnectionState = 'idle' | 'connecting' | 'open' | 'closed';
 export class WordleWarsClient {
   public playerId: string = '';
   public lastLobbyState: LobbyState | null = null;
+  public lastLobbyId: string | null = null;
   private ws: WebSocket | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private handlers = new Map<MsgType, Handler<any>[]>();
@@ -173,6 +174,7 @@ export class WordleWarsClient {
               this.playerId = (env.payload as ConnectedPayload).player_id;
             } else if (env.type === 'lobby_joined' || env.type === 'lobby_created' || env.type === 'lobby_update') {
               this.lastLobbyState = env.payload as LobbyState;
+              this.lastLobbyId = this.lastLobbyState.id;
             } else if (env.type === 'lobby_left') {
               this.lastLobbyState = null;
             }

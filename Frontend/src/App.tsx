@@ -79,6 +79,9 @@ export default function App() {
 
   function handlePlayAgain() {
     if (app.gameMode === 'online') {
+      if (wsClient.lastLobbyId) {
+        wsClient.joinLobby(wsClient.lastLobbyId);
+      }
       setApp(prev => ({ ...prev, screen: 'lobby', lastResult: null }));
     } else {
       setApp(prev => ({

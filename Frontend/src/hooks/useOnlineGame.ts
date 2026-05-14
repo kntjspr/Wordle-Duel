@@ -190,6 +190,10 @@ export function useOnlineGame({
     // 3. game_over — backend reveals the word and final scores
     unsubs.push(wsClient.on<GameOverPayload>('game_over', payload => {
       if (!payload) return;
+      
+      // Explicitly leave the lobby so we aren't showing up as 'in room' to others
+      // while we're staring at the results screen.
+      wsClient.leaveLobby();
 
       setState(prev => {
         const result: GameResult = {
